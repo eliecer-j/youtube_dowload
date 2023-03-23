@@ -1,0 +1,60 @@
+from tabulate import tabulate
+import click
+from pytube import YouTube
+from pytube.cli import on_progress
+from time import sleep
+from progress.bar import Bar
+import sys
+
+header = {
+        'title':'Title',
+        'author': 'Author',
+        'publish_date':'Publish_date'
+    }
+
+
+@click.command()
+@click.argument('url')
+def download(url):
+    video = YouTube(url, on_progress_callback=on_progress)
+    quality = []
+    data = [{
+        'title':video.title.upper(),
+        'author': video.author,
+        'publish_date': video.publish_date
+    }]
+
+    click.echo(tabulate(data, headers=header, tablefmt='fancy_grid'))
+    
+
+    qualitys = video.streaming_data['formats']
+    for i in qualitys:
+        qualityLabel = i['qualityLabel']
+        quality.append(qualityLabel)
+
+    click.echo(tabulate([quality], headers=['quality']))
+    click.echo()
+    calidad = input(str('escoge la calidad '))
+
+    while calidad not in quality:
+        click.echo('calidad incorrepta ')
+        calidad = input(str('escoge la calidad'))
+    else:
+        click.echo('Espera...')
+        click.echo()
+        video.streams.filter(res=calidad, progressive=False).first().download()
+        click.echo("(:")
+        click.echo('Descarga Exitosa!')
+          
+          
+
+
+@click.group()
+def progress():
+    pass
+
+progress.add_command(download)
+
+
+if __name__ == '__main__':
+    progress()
